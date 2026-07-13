@@ -17,9 +17,16 @@ if (preg_match('#^/api/#', $uri)) {
     return true;
 }
 
-//restituisco file statici se questi esistono
-$publicFile = $_SERVER['DOCUMENT_ROOT'] . $uri;
-if ($uri !== '/' && file_exists($publicFile) && is_file($publicFile)) {
+//verifico il realpath per evitare attacchi di file traversal
+$base = realpath($_SERVER['DOCUMENT_ROOT']);
+$requested = realpath($base . '/' . ltrim($uri, '/'));
+if ($requested === false || strpos($requested, $base) !== 0) {
+    http_response_code(404);
+    echo "File non trovato";
+    return true;
+}
+//restituisco il file se esiste nella directory del server
+if (is_file($requested)) {
     return false;
 }
 
